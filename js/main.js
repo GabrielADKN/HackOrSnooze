@@ -14,6 +14,13 @@ const $navLogin = $("#nav-login");
 const $navUserProfile = $("#nav-user-profile");
 const $navLogOut = $("#nav-logout");
 
+const $navSubmitStory = $("#nav-submit");
+const $submitForm = $("#submit-form");
+const $favoritedStories = $("#favorites-list");
+const $ownStories = $("#my-stories-list");
+const $storiesLists = $(".stories-list");
+const $userProfile = $("#user-profile");
+
 /** To make it easier for individual components to show just themselves, this
  * is a useful function that hides pretty much everything on the page. After
  * calling this, individual components can re-show just what they want.
@@ -21,9 +28,11 @@ const $navLogOut = $("#nav-logout");
 
 function hidePageComponents() {
   const components = [
-    $allStoriesList,
+    $storiesLists,
+    $submitForm,
     $loginForm,
     $signupForm,
+    $userProfile
   ];
   components.forEach(c => c.hide());
 }

@@ -24,7 +24,7 @@ class Story {
 
   getHostName() {
     // UNIMPLEMENTED: complete this function!
-    return "hostname.com";
+    return new URL(this.url).host;
   }
 }
 
@@ -72,22 +72,40 @@ class StoryList {
    */
 
   async addStory(user, { title, author, url }) {
-    // POST request to /stories
-    const token = user.loginToken;
-    // console.log(token);
-    const response = await axios({
-      method: "POST",
-      url: `${BASE_URL}/stories`,
-      data: { token, story: { title, author, url } },
-    });
-    // create a new Story instance
-    const story = new Story(response.data.story);
-    // add the story to the beginning of the list
-    this.stories.unshift(story);
-    // add the story to the beginning of the user's list
-    user.ownStories.unshift(story);
-    // return the story instance
-    return story;
+    try {
+      const token = user.loginToken;
+      const response = await axios({
+        method: "POST",
+        url: `${BASE_URL}/stories`,
+        data: { token, story: { title, author, url } },
+      });
+
+      const story = new Story(response.data.story);
+      this.stories.unshift(story);
+      user.ownStories.unshift(story);
+      return story;
+    } catch (error) {
+      console.error("Error adding story:", error);
+      throw error;
+    }
+  }
+
+  async removeStory(user, storyId) {
+    try {
+      const token = user.loginToken;
+      await axios({
+        method: "DELETE",
+        url: `${BASE_URL}/stories/${storyId}`,
+        data: { token: token },
+      });
+
+      this.stories = this.stories.filter((s) => s.storyId !== storyId);
+      user.ownStories = user.ownStories.filter((s) => s.storyId !== storyId);
+      user.favorites = user.favorites.filter((s) => s.storyId !== storyId);
+    } catch (error) {
+      console.error("Error removing story:", error);
+      throw error;
+    }
   }
 }
 
@@ -125,56 +143,56 @@ class User {
    */
 
   static async signup(username, password, name) {
-    const response = await axios({
-      url: `${BASE_URL}/signup`,
-      method: "POST",
-      data: { user: { username, password, name } },
-    });
+    try {
+      const response = await axios({
+        url: `${BASE_URL}/signup`,
+        method: "POST",
+        data: { user: { username, password, name } },
+      });
 
-    let { user } = response.data;
+      let { user } = response.data;
 
-    return new User(
-      {
-        username: user.username,
-        name: user.name,
-        createdAt: user.createdAt,
-        favorites: user.favorites,
-        ownStories: user.stories,
-      },
-      response.data.token
-    );
+      return new User(
+        {
+          username: user.username,
+          name: user.name,
+          createdAt: user.createdAt,
+          favorites: user.favorites,
+          ownStories: user.stories,
+        },
+        response.data.token
+      );
+    } catch (error) {
+      console.error("Error signing up:", error);
+      throw error;
+    }
   }
-
-  /** Login in user with API, make User instance & return it.
-
-   * - username: an existing user's username
-   * - password: an existing user's password
-   */
 
   static async login(username, password) {
-    const response = await axios({
-      url: `${BASE_URL}/login`,
-      method: "POST",
-      data: { user: { username, password } },
-    });
+    try {
+      const response = await axios({
+        url: `${BASE_URL}/login`,
+        method: "POST",
+        data: { user: { username, password } },
+      });
 
-    let { user } = response.data;
+      let { user } = response.data;
 
-    return new User(
-      {
-        username: user.username,
-        name: user.name,
-        createdAt: user.createdAt,
-        favorites: user.favorites,
-        ownStories: user.stories,
-      },
-      response.data.token
-    );
+      return new User(
+        {
+          username: user.username,
+          name: user.name,
+          createdAt: user.createdAt,
+          favorites: user.favorites,
+          ownStories: user.stories,
+        },
+        response.data.token
+      );
+    } catch (error) {
+      console.error("Error logging in:", error);
+      throw error;
+    }
   }
-
-  /** When we already have credentials (token & username) for a user,
-   *   we can log them in automatically. This function does that.
-   */
 
   static async loginViaStoredCredentials(token, username) {
     try {
@@ -196,9 +214,48 @@ class User {
         },
         token
       );
-    } catch (err) {
-      console.error("loginViaStoredCredentials failed", err);
+    } catch (error) {
+      console.error("Error logging in via stored credentials:", error);
       return null;
     }
+  }
+
+  async addFavorite(story) {
+    try {
+      this.favorites.push(story);
+      await this._addOrRemoveFavorite("add", story);
+    } catch (error) {
+      console.error("Error adding favorite:", error);
+      throw error; 
+    }
+  }
+
+  async removeFavorite(story) {
+    try {
+      this.favorites = this.favorites.filter((s) => s.storyId !== story.storyId);
+      await this._addOrRemoveFavorite("remove", story);
+    } catch (error) {
+      console.error("Error removing favorite:", error);
+      throw error; 
+    }
+  }
+
+  async _addOrRemoveFavorite(name, story) {
+    try {
+      const method = name === "add" ? "POST" : "DELETE";
+      const token = this.loginToken;
+      await axios({
+        url: `${BASE_URL}/users/${this.username}/favorites/${story.storyId}`,
+        method,
+        data: { token },
+      });
+    } catch (error) {
+      console.error("Error adding/removing favorite:", error);
+      throw error; 
+    }
+  }
+
+  isFavorite(story) {
+    return this.favorites.some((s) => s.storyId === story.storyId);
   }
 }
