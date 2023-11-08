@@ -72,8 +72,6 @@ class StoryList {
    */
 
   async addStory(user, { title, author, url }) {
-    // UNIMPLEMENTED: complete this function!
-
     // POST request to /stories
     const token = user.loginToken;
     // console.log(token);
