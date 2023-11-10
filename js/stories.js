@@ -3,14 +3,20 @@
 // This is the global list of the stories, an instance of StoryList
 let storyList;
 
+let currentPage = 1;
+
 /** Get and show stories when site first loads. */
 
 async function getAndShowStoriesOnStart() {
-  storyList = await StoryList.getStories();
-  $storiesLoadingMsg.remove();
-
-  putStoriesOnPage();
+  try {
+    storyList = await StoryList.getStories();
+    $storiesLoadingMsg.remove();
+    putStoriesOnPage();
+  } catch (error) {
+    console.error("Error fetching stories:", error);
+  }
 }
+
 
 /**
  * A render method to render HTML for an individual Story instance

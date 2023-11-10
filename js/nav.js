@@ -8,8 +8,13 @@
 
 function navAllStories(evt) {
   console.debug("navAllStories", evt);
-  hidePageComponents();
-  putStoriesOnPage();
+  try {
+    hidePageComponents();
+    putStoriesOnPage();
+  } catch (error) {
+    console.error("Error fetching and showing stories:", error);
+  }
+
 }
 
 $body.on("click", "#nav-all", navAllStories);
@@ -51,14 +56,18 @@ function updateNavOnLogin() {
 }
 
 function navMyStories(evt) {
-  hidePageComponents();
-  putUserStoriesOnPage();
-  $ownStories.show();
+  try {
+    hidePageComponents();
+    putUserStoriesOnPage();
+    $ownStories.show();
+  } catch {
+    console.log("Error fetching and showing stories:", error);
+  }
 }
 
 $body.on("click", "#nav-my-stories", navMyStories);
 
-function navUserProfileClick(evt){
+function navUserProfileClick(evt) {
   console.log("navUserProfileClick", evt);
   hidePageComponents();
   $userProfile.show();
